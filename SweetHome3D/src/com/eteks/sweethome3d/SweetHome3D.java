@@ -430,7 +430,13 @@ public class SweetHome3D extends HomeApplication {
     }
 
     if (OperatingSystem.isMacOSX()) {
-      MacOSXConfiguration.bindToApplicationMenu(this);
+      try {
+        MacOSXConfiguration.bindToApplicationMenu(this);
+      } catch (RuntimeException ex) {
+        // com.apple.eawt is no longer implemented by current JDKs on current macOS versions;
+        // skip the Mac-specific menu bar integration rather than blocking app startup.
+        ex.printStackTrace();
+      }
     }
 
     // Start app
