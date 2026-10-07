@@ -723,10 +723,15 @@ public class FurnitureTable extends JTable implements View, Printable {
       });
   }
 
-  /**
-   * Prints this component to make it fill <code>pageFormat</code> imageable size.
-   */
   public int print(Graphics g, PageFormat pageFormat, int pageIndex) throws PrinterException {
+    return print(g, pageFormat, pageIndex, false);
+  }
+
+  /**
+   * Prints this component to make it fill <code>pageFormat</code> imageable size. 
+   * Allows display of all levels
+   */
+  public int print(Graphics g, PageFormat pageFormat, int pageIndex, boolean forceLevelColumn) throws PrinterException {
     // Create a printable column model from the column model of this table 
     // with printable renderers for each column
     DefaultTableColumnModel printableColumnModel = new DefaultTableColumnModel();
@@ -734,9 +739,9 @@ public class FurnitureTable extends JTable implements View, Printable {
     final DefaultTableCellRenderer defaultRenderer = new DefaultTableCellRenderer();
     defaultRenderer.setHorizontalAlignment(DefaultTableCellRenderer.CENTER);
     TableCellRenderer printableHeaderRenderer = new TableCellRenderer() {
-        public Component getTableCellRendererComponent(JTable table, Object value, 
+      public Component getTableCellRendererComponent(JTable table, Object value, 
                                    boolean isSelected, boolean hasFocus, int row, int column) {
-          // Delegate rendering to default cell renderer
+          // Delegate rendering to default cell renderer 
           JLabel headerRendererLabel = (JLabel)defaultRenderer.getTableCellRendererComponent(table, value, 
               isSelected, hasFocus, row, column);
           // Don't display sort icon
@@ -750,8 +755,15 @@ public class FurnitureTable extends JTable implements View, Printable {
           return headerRendererLabel;
         }
       };
+    // whether table's current column model already has Level column as visible property
+    boolean levelColumnIncluded = false;
     for (int columnIndex = 0, n = columnModel.getColumnCount(); columnIndex < n; columnIndex++) {
       final TableColumn tableColumn = columnModel.getColumn(columnIndex);
+
+      // if Level column is there, turn bool true
+      if (tableColumn.getIdentifier() == HomePieceOfFurniture.SortableProperty.LEVEL) {
+        levelColumnIncluded = true;
+      }
       // Create a printable column from existing table column
       TableColumn printableColumn = new TableColumn();
       printableColumn.setIdentifier(tableColumn.getIdentifier());
@@ -778,6 +790,27 @@ public class FurnitureTable extends JTable implements View, Printable {
       // Change printable column header renderer
       printableColumn.setHeaderRenderer(printableHeaderRenderer);
       printableColumnModel.addColumn(printableColumn);
+    }    
+    if (forceLevelColumn && !levelColumnIncluded && columnModel instanceof FurnitureTableColumnModel) {
+      final TableColumn levelColumn = ((FurnitureTableColumnModel)columnModel).availableColumns.get(
+          HomePieceOfFurniture.SortableProperty.LEVEL);
+      if (levelColumn != null) {
+        TableColumn printableLevelColumn = new TableColumn();
+        printableLevelColumn.setIdentifier(levelColumn.getIdentifier());
+        printableLevelColumn.setHeaderValue(levelColumn.getHeaderValue());
+        printableLevelColumn.setCellRenderer(new TableCellRenderer() {
+            public Component getTableCellRendererComponent(JTable table, Object value,
+                                   boolean isSelected, boolean hasFocus, int row, int column) {
+              Component rendererComponent = levelColumn.getCellRenderer().getTableCellRendererComponent(
+                  table, value, isSelected, hasFocus, row, column);
+              rendererComponent.setBackground(Color.WHITE);
+              rendererComponent.setForeground(Color.BLACK);
+              return rendererComponent;
+            }
+          });
+        printableLevelColumn.setHeaderRenderer(printableHeaderRenderer);
+        printableColumnModel.addColumn(printableLevelColumn);
+      }
     }    
     return print(g, pageFormat, pageIndex, printableColumnModel, Color.BLACK);
   }
