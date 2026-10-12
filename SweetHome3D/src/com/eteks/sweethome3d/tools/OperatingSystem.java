@@ -457,14 +457,8 @@ public class OperatingSystem {
    */
   private static class MacOSXFileManager {
     public static String getApplicationSupportFolder() throws IOException {
-      try {
-        // Find application support folder (0x61737570) for user domain (-32763)
-        return FileManager.findFolder((short)-32763, 0x61737570);
-      } catch (RuntimeException ex) {
-        // Carbon's FindFolder API was removed from macOS; current JDKs only ship
-        // a stub that throws here. Fall back to the well-known path it used to return.
-        return System.getProperty("user.home") + "/Library/Application Support";
-      }
+      // Find application support folder (0x61737570) for user domain (-32763)
+      return FileManager.findFolder((short)-32763, 0x61737570);
     }
   }
 }
